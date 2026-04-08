@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>CSHR Scenariomodell</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #ffffff; --bg2: #f5f5f4; --bg3: #eeece9;
+    --text: #1a1a18; --text2: #5a5a56; --text3: #8a8a85;
+    --border: rgba(0,0,0,0.12); --border2: rgba(0,0,0,0.22);
+    --amber: #BA7517; --amber-bg: #FAEEDA; --amber-text: #633806;
+    --green: #3B6D11; --green-bg: #EAF3DE; --green-text: #27500A;
+    --red: #A32D2D; --red-bg: #FCEBEB; --red-text: #501313;
+    --blue: #185FA5; --blue-bg: #E6F1FB; --blue-text: #042C53;
+    --radius: 10px; --radius-sm: 6px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1c1c1a; --bg2: #252523; --bg3: #2e2e2b;
+      --text: #f0ede8; --text2: #a0a09a; --text3: #606058;
+      --border: rgba(255,255,255,0.1); --border2: rgba(255,255,255,0.2);
+      --amber: #EF9F27; --amber-bg: #412402; --amber-text: #FAC775;
+      --green: #97C459; --green-bg: #173404; --green-text: #C0DD97;
+      --red: #F09595; --red-bg: #501313; --red-text: #F7C1C1;
+      --blue: #85B7EB; --blue-bg: #042C53; --blue-text: #B5D4F4;
+    }
+  }
+  body { font-family: -apple-system, 'SF Pro Text', sans-serif; background: var(--bg3); color: var(--text); font-size: 14px; padding: 16px; min-height: 100vh; }
+  h1 { font-size: 17px; font-weight: 600; color: var(--text); }
+  .badge { background: var(--amber-bg); color: var(--amber-text); font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: var(--radius-sm); display: inline-block; }
+  .sub { font-size: 11px; color: var(--text3); margin: 3px 0 12px; }
+  .notice { background: var(--bg2); border-left: 3px solid var(--border2); padding: 10px 13px; border-radius: 0 var(--radius-sm) var(--radius-sm) 0; font-size: 12px; color: var(--text2); line-height: 1.6; margin-bottom: 16px; }
+  .card { background: var(--bg2); border-radius: var(--radius); padding: 14px; margin-bottom: 12px; }
+  .section-label { font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: .07em; margin-bottom: 10px; }
+  .metrics { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 12px; }
+  .metric { background: var(--bg2); border-radius: var(--radius-sm); padding: 10px; text-align: center; }
+  .metric-label { font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 4px; }
+  .metric-val { font-size: 20px; font-weight: 600; color: var(--text); }
+  .metric-sub { font-size: 10px; color: var(--text3); margin-top: 2px; }
+  .scen-btns { display: flex; gap: 6px; margin-bottom: 14px; }
+  .scen-btn { flex: 1; padding: 8px 0; border-radius: var(--radius-sm); border: 1px solid var(--border2); background: var(--bg3); cursor: pointer; font-size: 12px; font-weight: 600; color: var(--text2); -webkit-tap-highlight-color: transparent; }
+  .bear-active { background: var(--red-bg); color: var(--red-text); border-color: transparent; }
+  .base-active { background: var(--amber-bg); color: var(--amber-text); border-color: transparent; }
+  .bull-active { background: var(--green-bg); color: var(--green-text); border-color: transparent; }
+  .slider-row { margin-bottom: 14px; }
+  .slider-top { display: flex; justify-content: space-between; margin-bottom: 5px; }
+  .slider-lbl { font-size: 11px; color: var(--text2); text-transform: uppercase; letter-spacing: .06em; }
+  .slider-val { font-size: 12px; font-weight: 600; color: var(--text); }
+  input[type=range] { width: 100%; -webkit-appearance: none; height: 4px; border-radius: 2px; background: var(--bg3); outline: none; }
+  input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 22px; height: 22px; border-radius: 50%; background: var(--amber); cursor: pointer; }
+  .forecast { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 12px; }
+  .year-card { background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 11px 10px; }
+  .year-card.hl { background: var(--amber-bg); border-color: transparent; }
+  .year-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  .year-title { font-size: 9px; color: var(--text2); text-transform: uppercase; letter-spacing: .07em; }
+  .growth-badge { font-size: 10px; font-weight: 600; padding: 2px 6px; border-radius: var(--radius-sm); }
+  .kv { display: flex; justify-content: space-between; margin-bottom: 4px; }
+  .kk { font-size: 11px; color: var(--text3); }
+  .vv { font-size: 11px; font-weight: 500; color: var(--text); }
+  .vv.hi { color: var(--amber); font-size: 12px; font-weight: 600; }
+  .vv.warn { color: var(--text3); text-decoration: line-through; font-size: 10px; }
+  .targets { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 12px; }
+  .target { background: var(--bg2); border-radius: var(--radius-sm); padding: 10px; text-align: center; }
+  .target-lbl { font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 4px; }
+  .target-val { font-size: 20px; font-weight: 600; }
+  .target-sub { font-size: 10px; color: var(--text3); margin-top: 2px; }
+  .mult-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 10px; }
+  .mult-cell { border: 0.5px solid var(--border); border-radius: var(--radius-sm); padding: 10px 6px; text-align: center; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+  .mult-cell.sel { border-color: var(--amber); background: var(--amber-bg); }
+  .mult-x { font-size: 10px; color: var(--text3); margin-bottom: 3px; }
+  .mult-price { font-size: 14px; font-weight: 600; color: var(--text); }
+  .mult-cell.sel .mult-price { color: var(--amber-text); }
+  .mult-up { font-size: 10px; margin-top: 2px; }
+  .footer { font-size: 10px; color: var(--text3); line-height: 1.7; margin-top: 8px; text-align: center; }
+  table { width: 100%; border-collapse: collapse; font-size: 11px; }
+  th, td { padding: 4px 3px; }
+  th { font-weight: 500; text-align: center; }
+  td { text-align: center; }
+  td:first-child { text-align: left; color: var(--text2); }
+</style>
+</head>
+<body>
+
+<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+  <span class="badge">CSHR</span>
+  <h1>CoinShares PLC</h1>
+</div>
+<p class="sub">Scenariomodell 2026–2027 · 131 781 482 aktier · Offline-version</p>
+
+<div class="notice">
+  Ingen utdelning planerad — <em>"Odysseus Holdings nuvarande avsikt är att behålla alla intäkter för användning i sin affärsverksamhet."</em> (erbjudandehandlingen feb 2026)
+</div>
+
+<div class="section-label">Nuläge</div>
+<div class="metrics" id="metrics"></div>
+
+<div class="card">
+  <div class="section-label">Aktiekurs</div>
+  <div class="slider-row">
+    <div class="slider-top"><span class="slider-lbl">Aktiekurs (USD)</span><span class="slider-val" id="lbl-price">$6.81</span></div>
+    <input type="range" id="sl-price" min="3" max="30" step="0.10" value="6.81">
+  </div>
+
+  <div class="section-label" style="margin-top:4px;">Scenarion</div>
+  <div class="scen-btns">
+    <button class="scen-btn" id="btn-bear" onclick="applyScen('bear')">BEAR</button>
+    <button class="scen-btn base-active" id="btn-base" onclick="applyScen('base')">BASE</button>
+    <button class="scen-btn" id="btn-bull" onclick="applyScen('bull')">BULL</button>
+  </div>
+
+  <div class="slider-row">
+    <div class="slider-top"><span class="slider-lbl">Intäktstillväxt 2026</span><span class="slider-val" id="lbl-g26">+20%</span></div>
+    <input type="range" id="sl-g26" min="-20" max="80" step="5" value="20">
+  </div>
+  <div class="slider-row">
+    <div class="slider-top"><span class="slider-lbl">Intäktstillväxt 2027</span><span class="slider-val" id="lbl-g27">+25%</span></div>
+    <input type="range" id="sl-g27" min="-20" max="80" step="5" value="25">
+  </div>
+  <div class="slider-row">
+    <div class="slider-top"><span class="slider-lbl">EBITDA-marginal</span><span class="slider-val" id="lbl-margin">86.6%</span></div>
+    <input type="range" id="sl-margin" min="50" max="95" step="0.5" value="86.6">
+  </div>
+  <div class="slider-row" style="margin-bottom:0">
+    <div class="slider-top"><span class="slider-lbl">Målmultipel EV/EBITDA</span><span class="slider-val" id="lbl-mult">12x</span></div>
+    <input type="range" id="sl-mult" min="5" max="25" step="1" value="12">
+  </div>
+</div>
+
+<div class="section-label">Prognoser</div>
+<div class="forecast" id="forecast"></div>
+
+<div class="card">
+  <div class="section-label">Snabbscenarier (BEAR / BASE / BULL)</div>
+  <table id="scen-table"></table>
+</div>
+
+<div class="section-label">Kursmål vid vald multipel</div>
+<div class="targets" id="targets"></div>
+
+<div class="section-label">Kursmål 2026 — klicka för att välja multipel</div>
+<div class="mult-grid" id="multiples"></div>
+
+<p class="footer">
+  Lock-up triggers: $18 (20% frigörs) · $22 (allt frigörs)<br>
+  Jämförbara: Coinbase ~29x · BlackRock ~19x · WisdomTree ~13x<br>
+  Ej finansiell rådgivning · H2 2025 uppskattad · Årsrapport 30 april 2026
+</p>
+
+<script>
+const SHARES = 131781482, REV25 = 208.7, EBITDA25 = 180.8, EPS25 = 1.30, NR = 0.95;
+const PRESETS = {
+  bear: { g26: -5, g27: -5, margin: 83.6 },
+  base: { g26: 20, g27: 25, margin: 86.6 },
+  bull: { g26: 40, g27: 35, margin: 89.6 }
+};
+const MULTS = [7, 10, 12, 15, 18, 22];
+let S = { price: 6.81, g26: 20, g27: 25, margin: 86.6, mult: 12 };
+
+function calc(rev, g, m) {
+  const r = rev * (1 + g/100), e = r * m/100, n = e * NR, eps = n/(SHARES/1e6);
+  return { rev: r, ebitda: e, net: n, eps };
+}
+function fM(n) { return n>=1000?'$'+(n/1000).toFixed(2)+'bn':'$'+n.toFixed(1)+'m'; }
+function fU(n,d) { return '$'+n.toFixed(d===undefined?2:d); }
+function fX(n) { return n.toFixed(1)+'x'; }
+function fS(n) { return (n>=0?'+':'')+Math.round(n)+'%'; }
+function uc(n) { return n>=0?'var(--green)':'var(--red)'; }
+function ubg(n) { return n>=0?'var(--green-bg)':'var(--red-bg)'; }
+function utxt(n) { return n>=0?'var(--green-text)':'var(--red-text)'; }
+
+function render() {
+  const {price,g26,g27,margin,mult} = S;
+  const y26=calc(REV25,g26,margin), y27=calc(y26.rev,g27,margin);
+  const mc=price*SHARES/1e6, tp26=y26.ebitda*mult/(SHARES/1e6), tp27=y27.ebitda*mult/(SHARES/1e6);
+  const up26=(tp26/price-1)*100, up27=(tp27/price-1)*100;
+  const cagr2=(Math.pow(tp27/price,0.5)-1)*100;
+
+  document.getElementById('lbl-price').textContent=fU(price);
+  document.getElementById('lbl-g26').textContent=(g26>=0?'+':'')+g26+'%';
+  document.getElementById('lbl-g27').textContent=(g27>=0?'+':'')+g27+'%';
+  document.getElementById('lbl-margin').textContent=margin.toFixed(1)+'%';
+  document.getElementById('lbl-mult').textContent=mult+'x';
+
+  document.getElementById('metrics').innerHTML=[
+    ['Marknadsvärde',fM(mc),''],
+    ['EV/EBITDA 2025e',fX(mc/EBITDA25),'$181m EBITDA'],
+    ['EV/EBITDA 2026e',fX(mc/y26.ebitda),fM(y26.ebitda)],
+    ['P/E 2026e',fX(price/y26.eps),'EPS '+fU(y26.eps)],
+  ].map(([l,v,s])=>`<div class="metric"><div class="metric-label">${l}</div><div class="metric-val">${v}</div>${s?'<div class="metric-sub">'+s+'</div>':''}</div>`).join('');
+
+  const yrs=[
+    {lbl:'FY2025 bas',hl:true,gr:null,y:{rev:REV25,ebitda:EBITDA25,net:EBITDA25*NR,eps:EPS25}},
+    {lbl:'FY2026',hl:false,gr:g26,y:y26},
+    {lbl:'FY2027',hl:false,gr:(y27.rev/REV25-1)*100,y:y27},
+  ];
+  document.getElementById('forecast').innerHTML=yrs.map(({lbl,hl,gr,y})=>`
+    <div class="year-card${hl?' hl':''}">
+      <div class="year-head"><span class="year-title">${lbl}</span>${gr!==null?`<span class="growth-badge" style="background:${ubg(gr)};color:${utxt(gr)}">${fS(gr)}</span>`:''}</div>
+      <div class="kv"><span class="kk">Intäkter</span><span class="vv">${fM(y.rev)}</span></div>
+      <div class="kv"><span class="kk">EBITDA</span><span class="vv hi">${fM(y.ebitda)}</span></div>
+      <div class="kv"><span class="kk">Marginal</span><span class="vv">${(y.ebitda/y.rev*100).toFixed(1)}%</span></div>
+      <div class="kv"><span class="kk">EPS</span><span class="vv hi">${fU(y.eps)}</span></div>
+      <div class="kv"><span class="kk">P/E</span><span class="vv">${fX(price/y.eps)}</span></div>
+      <div class="kv"><span class="kk">Utdelning</span><span class="vv warn">Ingen</span></div>
+    </div>`).join('');
+
+  const rows=[
+    ['Rev 2026',[[-5,-3],[20,0],[40,3]].map(([g])=>fM(REV25*(1+g/100)))],
+    ['EBITDA 2026',[[-5,-3],[20,0],[40,3]].map(([g,md])=>fM(REV25*(1+g/100)*(86.6+md)/100))],
+    ['EPS 2026',[[-5,-3],[20,0],[40,3]].map(([g,md])=>fU(REV25*(1+g/100)*(86.6+md)/100*NR/(SHARES/1e6)))],
+    ['@12x EBITDA',[[-5,-3],[20,0],[40,3]].map(([g,md])=>fU(REV25*(1+g/100)*(86.6+md)/100*12/(SHARES/1e6)))],
+    ['@15x EBITDA',[[-5,-3],[20,0],[40,3]].map(([g,md])=>fU(REV25*(1+g/100)*(86.6+md)/100*15/(SHARES/1e6)))],
+  ];
+  document.getElementById('scen-table').innerHTML=`<tr><th style="text-align:left"></th><th style="color:var(--red-text)">BEAR</th><th style="color:var(--amber-text)">BASE</th><th style="color:var(--green-text)">BULL</th></tr>`+
+    rows.map(([l,vs])=>`<tr><td>${l}</td>${vs.map((v,i)=>`<td style="color:${['var(--red-text)','var(--amber-text)','var(--green-text)'][i]};font-weight:600">${v}</td>`).join('')}</tr>`).join('');
+
+  document.getElementById('targets').innerHTML=[
+    ['Kursmål 2026',fU(tp26),'EBITDA '+fM(y26.ebitda),up26],
+    ['Avkastning 2026',fS(up26),'P/E '+fX(price/y26.eps),up26],
+    ['Kursmål 2027',fU(tp27),'EBITDA '+fM(y27.ebitda),up27],
+    ['CAGR 2 år',fS(cagr2),'annualiserad',cagr2],
+  ].map(([l,v,s,u])=>`<div class="target"><div class="target-lbl">${l}</div><div class="target-val" style="color:${uc(u)}">${v}</div><div class="target-sub">${s}</div></div>`).join('');
+
+  document.getElementById('multiples').innerHTML=MULTS.map(m=>{
+    const tp=y26.ebitda*m/(SHARES/1e6), up=(tp/price-1)*100, sel=m===mult;
+    return `<div class="mult-cell${sel?' sel':''}" onclick="selMult(${m})">
+      <div class="mult-x">${m}x</div>
+      <div class="mult-price">${fU(tp)}</div>
+      <div class="mult-up" style="color:${uc(up)}">${fS(up)}</div></div>`;
+  }).join('');
+}
+
+function applyScen(k) {
+  const s=PRESETS[k]; S.g26=s.g26; S.g27=s.g27; S.margin=s.margin;
+  document.getElementById('sl-g26').value=s.g26;
+  document.getElementById('sl-g27').value=s.g27;
+  document.getElementById('sl-margin').value=s.margin;
+  ['bear','base','bull'].forEach(b=>{
+    document.getElementById('btn-'+b).className='scen-btn'+(b===k?' '+b+'-active':'');
+  });
+  render();
+}
+
+function selMult(m) { S.mult=m; document.getElementById('sl-mult').value=m; render(); }
+
+['price','g26','g27','margin','mult'].forEach(k=>{
+  document.getElementById('sl-'+k).addEventListener('input',function(){
+    S[k]=parseFloat(this.value);
+    if(k!=='price'&&k!=='mult'){['bear','base','bull'].forEach(b=>document.getElementById('btn-'+b).className='scen-btn');}
+    render();
+  });
+});
+
+render();
+</script>
+</body>
+</html>
